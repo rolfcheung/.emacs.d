@@ -1,0 +1,248 @@
+#+STARTUP: overview
+#+TITLE: .emacs.d file
+
+* Interface tweaks
+** Personal information
+
+#+BEGIN_SRC emacs-lisp
+
+  (setq user-full-name "Zhang Luping"
+       user-mail-address "rolf.cheung@gmail.com")
+
+#+END_SRC
+
+** Sensible-defaults.el for some basic settings
+
+#+BEGIN_SRC emacs-lisp
+
+  (load-file "~/.emacs.d/sensible-defaults.el")
+  (sensible-defaults/use-all-settings)
+  (sensible-defaults/use-all-keybindings)
+
+#+END_SRC
+
+** Open myinit conveniently
+
+#+BEGIN_SRC emacs-lisp
+
+  ;; Open myinit.org
+  (defun open-init-file()
+    (interactive)
+    (find-file "~/.emacs.d/configuration.org"))
+
+  (global-set-key (kbd "<f2>") 'open-init-file)
+
+#+END_SRC
+
+** Fix for mac
+#+BEGIN_SRC emacs-lisp
+
+;; Emacs on Mac somethimes can't find installed programs, i.e. PATH problem.
+;; This fixes that. Forked from jabranham/emacs-for-social-science
+(when (memq window-system '(mac ns))
+  (use-package exec-path-from-shell
+    :ensure t
+    :config
+    (exec-path-from-shell-initialize)))
+#+END_SRC
+
+** Theme
+#+BEGIN_SRC emacs-lisp
+  (load-theme 'adwaita t)
+
+  ;; Disable scroll bar, disable the toolbar completely and set initial
+  ;; frame parameters.
+  (when window-system
+    (scroll-bar-mode -1)
+    (tool-bar-mode -1)
+    (setq default-frame-alist
+          '((font . "Inconsolata-12")))
+  )
+
+  (setq linum-format "%4d")
+  (defun my-linum-mode-hook ()
+    (linum-mode t))
+
+  (add-hook 'find-file-hook 'my-linum-mode-hook)
+
+  ;; Wrap around nicely. The default behavior wraps in the middle of a
+  ;; word.
+  (global-visual-line-mode)
+
+  (setq-default line-spacing 0.5)
+
+  (when window-system
+    (set-frame-position (selected-frame) 130 0)
+    (set-frame-size (selected-frame) 160 50))
+#+END_SRC
+* Org-mode
+** Basic settings
+
+#+BEGIN_SRC emacs-lisp
+  ;; Key binding
+  (global-set-key "\C-cl" 'org-store-link)
+  (global-set-key "\C-ca" 'org-agenda)
+  (global-set-key "\C-cc" 'org-capture)
+
+  ;; Use current window editing a code block
+  (setq org-src-window-setup 'current-window)
+
+  ;; use syntax highlighting in org-file code blocks
+  (setq org-src-fontify-natively t)
+
+  ;;Tag alignment position on the right.
+  ;;(setq org-tags-column '-110)
+
+  ;; Enable beamer options when click "C-x C-e"
+  (use-package ox-beamer)
+
+   ;; A cleaner outline view
+  (use-package org
+    :config
+    (setq org-startup-indented t))
+
+  ;; Exporting to PDF with syntax highlighting in the code, Pygments may be needed
+  ;;(use-package ox-latex
+  ;;  :config
+  ;;  (add-to-list 'org-latex-packages-alist '("" "minted"))
+  ;;  (setq org-latex-listings 'minted))
+
+  ;;(setq org-latex-pdf-process
+  ;;      '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+  ;;        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+  ;;        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
+
+#+END_SRC
+** Babel
+
+#+BEGIN_SRC emacs-lisp
+
+  (org-babel-do-load-languages
+    'org-babel-load-languages
+    '((R . t)
+      (latex . t)
+      (python . t)
+      (org . t)
+      (emacs-lisp . t)))
+
+#+END_SRC
+** Agenda files
+#+BEGIN_SRC emacs-lisp
+  (setq org-agenda-files '("~/Documents/gtd/inbox.org"
+                           "~/Documents/gtd/gtd.org"
+                           "~/Documents/gtd/tickler.org"))
+#+END_SRC
+** Capture
+#+BEGIN_SRC emacs-lisp
+  (setq org-capture-templates '(("t" "Todo [inbox]" entry
+                                 (file+headline "~/Documents/gtd/inbox.org" "Tasks")
+                                 "* TODO %? %^G\n:PROPERTIES:\n\n:END:\nSCHEDULED: %^T\n %i\n")
+
+                                ("T" "Tickler" entry
+                                 (file+headline "~/Documents/gtd/tickler.org" "Tickler")
+                                 "* %i%? \n %U")
+
+                                ("W" "Working Paper" entry
+                                 (file+headline "~/Documents/gtd/gtd.org" "Working Paper")
+                                 "* TODO %?\n:PROPERTIES:\n\n:END:\nSCHEDULED:%^t DEADLINE: %^t %i\n")
+
+                                ("P" "Paper Reading" entry
+                                 (file+headline "~/Documents/gtd/gtd.org" "Paper Reading")
+                                 "* TODO %?\n:PROPERTIES:\n\n:END:\nSCHEDULED: %^t DEADLINE: %^t %i\n")))
+#+END_SRC
+
+** refile
+#+BEGIN_SRC emacs-lisp
+  (setq org-refile-targets '(("~/Documents/gtd/gtd.org" :maxlevel . 3)
+                             ("~/Documents/gtd/someday.org" :level . 1)
+                             ("~/Documents/gtd/tickler.org" :maxlevel . 2)))
+#+END_SRC
+** todo keywords
+#+BEGIN_SRC emacs-lisp
+  (setq org-todo-keywords '((sequence "TODO(t)" "WAITING(w)" "|" "DONE(d)" "CANCELLED(c)")))
+
+#+END_SRC
+** tags
+#+BEGIN_SRC emacs-lisp
+  (setq org-tag-alist '(("Reserch" . ?r)
+                        ("@Boss" . ?b)
+                        ("@Family" . ?f)
+                        ("@Pal" . ?p)
+                        ("Others" . ?o)))
+  (setq org-tags-column -80)
+  (setq org-tag-faces '(("Reserch" :foreground "orange" :underline t :weight bold)
+                        ("Others" :foreground "blue")
+                        ("@Boss" :foreground "lime green" :underline t :weight bold)
+                        ("@Pal" :foreground "purple")
+                        ("@Family" :foreground "#dd1c77" :underline t :weight bold)))
+#+END_SRC
+* Packages
+** ace-window
+
+#+BEGIN_SRC emacs-lisp
+
+  ;; Switch between windows in a fancy way
+  (use-package ace-window
+    :ensure t
+    :init
+    (progn
+      (setq aw-scope 'frame)
+      (global-set-key (kbd "C-x O") 'other-frame)
+      (global-set-key [remap other-window] 'ace-window)
+      (custom-set-faces
+       '(aw-leading-char-face
+         ((t (:inherit ace-jump-face-foreground :height 3.0)))))
+      ))
+
+#+END_SRC
+
+** counsel/ivy/swiper
+
+;; ido alternative
+
+#+BEGIN_SRC emacs-lisp
+
+  (use-package counsel
+    :ensure t
+    :bind
+    (("M-y" . counsel-yank-pop)
+     :map ivy-minibuffer-map
+     ("M-y" . ivy-next-line)))
+
+  (use-package ivy
+    :ensure t
+    :diminish (ivy-mode)
+    :bind (("C-x b" . ivy-switch-buffer))
+    :config
+    (ivy-mode 1)
+    (setq ivy-use-virtual-buffers t)
+    (setq ivy-display-style 'fancy))
+
+  (use-package swiper
+    :ensure t
+    :bind (("C-s" . swiper)
+           ("C-r" . swiper)
+           ("C-c C-r" . ivy-resume)
+           ("M-x" . counsel-M-x)
+           ("C-x C-f" . counsel-find-file))
+    :config
+    (progn
+      (ivy-mode 1)
+      (setq ivy-use-virtual-buffers t)
+      (setq ivy-display-style 'fancy)
+      (define-key read-expression-map (kbd "C-r") 'counsel-expression-history)
+      ))
+
+#+END_SRC
+
+** magit
+
+#+BEGIN_SRC emacs-lisp
+
+  (use-package magit
+    :ensure t
+    :init
+    (progn
+      (bind-key "C-x g" 'magit-status)))
+
+#+END_SRC
