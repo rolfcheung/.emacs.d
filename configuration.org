@@ -49,6 +49,7 @@
 ** Theme
 #+BEGIN_SRC emacs-lisp
   (load-theme 'adwaita t)
+  (require 'diminish)                ;; if you use :diminish
 
   ;; Disable scroll bar, disable the toolbar completely and set initial
   ;; frame parameters.
@@ -119,8 +120,7 @@
 
   (org-babel-do-load-languages
     'org-babel-load-languages
-    '((R . t)
-      (latex . t)
+    '((latex . t)
       (python . t)
       (org . t)
       (emacs-lisp . t)))
@@ -128,35 +128,28 @@
 #+END_SRC
 ** Agenda files
 #+BEGIN_SRC emacs-lisp
-  (setq org-agenda-files '("~/Documents/gtd/inbox.org"
-                           "~/Documents/gtd/gtd.org"
-                           "~/Documents/gtd/tickler.org"))
+  (setq org-agenda-files '("~/Documents/gtd/gcal.org"
+                           "~/Documents/gtd/project.org"))
 #+END_SRC
 ** Capture
 #+BEGIN_SRC emacs-lisp
-  (setq org-capture-templates '(("t" "Todo [inbox]" entry
-                                 (file+headline "~/Documents/gtd/inbox.org" "Tasks")
+  (setq org-capture-templates '(("t" "Todo [gcal]" entry
+                                 (file+headline "~/Documents/gtd/gcal.org" "Tasks")
                                  "* TODO %? %^G\n:PROPERTIES:\n\n:END:\nSCHEDULED: %^T\n %i\n")
 
-                                ("T" "Tickler" entry
-                                 (file+headline "~/Documents/gtd/tickler.org" "Tickler")
-                                 "* %i%? \n %U")
-
-                                ("W" "Working Paper" entry
-                                 (file+headline "~/Documents/gtd/gtd.org" "Working Paper")
+                                ("w" "Working Paper [project]" entry
+                                 (file+headline "~/Documents/gtd/project.org" "Working Paper")
                                  "* TODO %?\n:PROPERTIES:\n\n:END:\nSCHEDULED:%^t DEADLINE: %^t %i\n")
 
-                                ("P" "Paper Reading" entry
-                                 (file+headline "~/Documents/gtd/gtd.org" "Paper Reading")
+                                ("l" "Life Change [project]" entry
+                                 (file+headline "~/Documents/gtd/project.org" "Life Change")
+                                 "* TODO %?\n:PROPERTIES:\n\n:END:\nSCHEDULED:%^T  %i\n")
+
+                                ("p" "Paper Reading [project]" entry
+                                 (file+headline "~/Documents/gtd/project.org" "Paper Reading")
                                  "* TODO %?\n:PROPERTIES:\n\n:END:\nSCHEDULED: %^t DEADLINE: %^t %i\n")))
 #+END_SRC
 
-** refile
-#+BEGIN_SRC emacs-lisp
-  (setq org-refile-targets '(("~/Documents/gtd/gtd.org" :maxlevel . 3)
-                             ("~/Documents/gtd/someday.org" :level . 1)
-                             ("~/Documents/gtd/tickler.org" :maxlevel . 2)))
-#+END_SRC
 ** todo keywords
 #+BEGIN_SRC emacs-lisp
   (setq org-todo-keywords '((sequence "TODO(t)" "WAITING(w)" "|" "DONE(d)" "CANCELLED(c)")))
@@ -165,6 +158,7 @@
 ** tags
 #+BEGIN_SRC emacs-lisp
   (setq org-tag-alist '(("Reserch" . ?r)
+                        ("LifeChange" . ?l)
                         ("@Boss" . ?b)
                         ("@Family" . ?f)
                         ("@Pal" . ?p)
@@ -172,9 +166,164 @@
   (setq org-tags-column -80)
   (setq org-tag-faces '(("Reserch" :foreground "orange" :underline t :weight bold)
                         ("Others" :foreground "blue")
+                        ("LifeChange" :foregound "#f7fcb9")
                         ("@Boss" :foreground "lime green" :underline t :weight bold)
                         ("@Pal" :foreground "purple")
                         ("@Family" :foreground "#dd1c77" :underline t :weight bold)))
+#+END_SRC
+* Latex
+
+;;[[https://github.com/aculich/.emacs.d.git][Stolen from Aaron Culich]]
+#+BEGIN_SRC emacs-lisp
+  ;;; LaTeX with AUCTeX
+  (use-package tex-site                   ; AUCTeX initialization
+    :ensure auctex)
+
+  (use-package tex                        ; TeX editing/processing
+    :ensure auctex
+    :defer t
+    :config
+    (setq TeX-parse-self t                ; Parse documents to provide completion
+                                          ; for packages, etc.
+          TeX-auto-save t                 ; Automatically save style information
+          TeX-electric-sub-and-superscript t ; Automatically insert braces after
+                                          ; sub- and superscripts in math mode
+          TeX-electric-math '("\\(" "\\)")
+          ;; Don't insert magic quotes right away.
+          TeX-quote-after-quote t
+          ;; Don't ask for confirmation when cleaning
+          TeX-clean-confirm nil
+          ;; Provide forward and inverse search with SyncTeX
+          TeX-source-correlate-mode t
+          TeX-source-correlate-method 'synctex)
+    (setq-default TeX-master nil          ; Ask for the master file
+                  TeX-engine 'luatex      ; Use a modern engine
+                  ;; Redundant in 11.88, but keep for older AUCTeX
+                  TeX-PDF-mode t)
+
+    ;; Move to chktex
+    (setcar (cdr (assoc "Check" TeX-command-list)) "chktex -v6 %s"))
+
+  (use-package tex-buf                    ; TeX buffer management
+    :ensure auctex
+    :defer t
+    ;; Don't ask for confirmation when saving before processing
+    :config (setq TeX-save-query nil))
+
+  (use-package tex-style                  ; TeX style
+    :ensure auctex
+    :defer t
+    :config
+    ;; Enable support for csquotes
+    (setq LaTeX-csquotes-close-quote "}"
+          LaTeX-csquotes-open-quote "\\enquote{"))
+
+  (use-package tex-fold                   ; TeX folding
+    :ensure auctex
+    :defer t
+    :init (add-hook 'TeX-mode-hook #'TeX-fold-mode))
+
+  (use-package tex-mode                   ; TeX mode
+    :ensure auctex
+    :defer t
+    :config
+    (font-lock-add-keywords 'latex-mode
+                            `((,(rx "\\"
+                                    symbol-start
+                                    "fx" (1+ (or (syntax word) (syntax symbol)))
+                                    symbol-end)
+                               . font-lock-warning-face))))
+
+  (use-package latex                      ; LaTeX editing
+    :ensure auctex
+    :defer t
+    :config
+    ;; Teach TeX folding about KOMA script sections
+    (setq TeX-outline-extra `((,(rx (0+ space) "\\section*{") 2)
+                              (,(rx (0+ space) "\\subsection*{") 3)
+                              (,(rx (0+ space) "\\subsubsection*{") 4)
+                              (,(rx (0+ space) "\\minisec{") 5))
+          ;; No language-specific hyphens please
+          LaTeX-babel-hyphen nil)
+
+    (add-hook 'LaTeX-mode-hook #'LaTeX-math-mode))    ; Easy math input
+
+  (use-package auctex-latexmk             ; latexmk command for AUCTeX
+    :ensure t
+    :defer t
+    :after latex
+    :config (auctex-latexmk-setup))
+
+  ;; (use-package auctex-skim                ; Skim as viewer for AUCTeX
+  ;;   :load-path "lisp/"
+  ;;   :commands (auctex-skim-select)
+  ;;   :after tex
+  ;;   :config (auctex-skim-select))
+
+  (use-package bibtex                     ; BibTeX editing
+    :defer t
+    :config
+    ;; Run prog mode hooks for bibtex
+    (add-hook 'bibtex-mode-hook (lambda () (run-hooks 'prog-mode-hook)))
+
+    ;; Use a modern BibTeX dialect
+    (bibtex-set-dialect 'biblatex))
+
+  (defun lunaryorn-reftex-find-ams-environment-caption (environment)
+    "Find the caption of an AMS ENVIRONMENT."
+    (let ((re (rx-to-string `(and "\\begin{" ,environment "}"))))
+      ;; Go to the beginning of the label first
+      (re-search-backward re)
+      (goto-char (match-end 0)))
+    (if (not (looking-at (rx (zero-or-more space) "[")))
+        (error "Environment %s has no title" environment)
+      (let ((beg (match-end 0)))
+        ;; Move point onto the title start bracket and move over to the end,
+        ;; skipping any other brackets in between, and eventually extract the text
+        ;; between the brackets
+        (goto-char (1- beg))
+        (forward-list)
+        (buffer-substring-no-properties beg (1- (point))))))
+
+  (use-package reftex                     ; TeX/BibTeX cross-reference management
+    :defer t
+    :init (add-hook 'LaTeX-mode-hook #'reftex-mode)
+    :config
+    ;; Plug into AUCTeX
+    (setq reftex-plug-into-AUCTeX t
+          ;; Automatically derive labels, and prompt for confirmation
+          reftex-insert-label-flags '(t t)
+          reftex-label-alist
+          '(
+            ;; Additional label definitions for RefTeX.
+            ("definition" ?d "def:" "~\\ref{%s}"
+             lunaryorn-reftex-find-ams-environment-caption
+             ("definition" "def.") -3)
+            ("theorem" ?h "thm:" "~\\ref{%s}"
+             lunaryorn-reftex-find-ams-environment-caption
+             ("theorem" "th.") -3)
+            ("example" ?x "ex:" "~\\ref{%s}"
+             lunaryorn-reftex-find-ams-environment-caption
+             ("example" "ex") -3)
+            ;; Algorithms package
+            ("algorithm" ?a "alg:" "~\\ref{%s}"
+             "\\\\caption[[{]" ("algorithm" "alg") -3)))
+
+    ;; Provide basic RefTeX support for biblatex
+    (unless (assq 'biblatex reftex-cite-format-builtin)
+      (add-to-list 'reftex-cite-format-builtin
+                   '(biblatex "The biblatex package"
+                              ((?\C-m . "\\cite[]{%l}")
+                               (?t . "\\textcite{%l}")
+                               (?a . "\\autocite[]{%l}")
+                               (?p . "\\parencite{%l}")
+                               (?f . "\\footcite[][]{%l}")
+                               (?F . "\\fullcite[]{%l}")
+                               (?x . "[]{%l}")
+                               (?X . "{%l}"))))
+      (setq reftex-cite-format 'biblatex))
+    :diminish reftex-mode)
+
 #+END_SRC
 * Packages
 ** ace-window
@@ -244,5 +393,99 @@
     :init
     (progn
       (bind-key "C-x g" 'magit-status)))
+
+#+END_SRC
+** ignoroamus
+;;[[https://github.com/aculich/.emacs.d.git][Stolen from Aaron Culich]]
+#+BEGIN_SRC emacs-lisp
+  (require 'dired-x)
+
+  (use-package ignoramus                  ; Ignore uninteresting files everywhere
+    :ensure t
+    :config
+    ;; Ignore some additional directories and file extensions
+    (dolist (name '(".cask"
+                    ".vagrant"
+                    ".ensime_cache" ".ensime"
+                    ".stack-work"))
+      ;; Ignore some additional directories
+      (add-to-list 'ignoramus-file-basename-exact-names name))
+
+    (dolist (ext '(".fls" ".out" ".DS_Store"; LaTeX
+                   ))
+      (add-to-list 'ignoramus-file-endings ext))
+
+    (ignoramus-setup))
+
+#+END_SRC
+** rainbow-delimiters
+#+BEGIN_SRC emacs-lisp
+  (use-package rainbow-delimiters         ; Highlight delimiters by depth
+    :ensure t
+    :defer t
+    :init
+    (dolist (hook '(text-mode-hook prog-mode-hook))
+      (add-hook hook #'rainbow-delimiters-mode)))
+
+#+END_SRC
+** rainbow-mode
+#+BEGIN_SRC emacs-lisp
+  ;; (use-package rainbow-mode               ; Fontify color values in code
+  ;;   :ensure t
+  ;;   :bind (("C-c t r" . rainbow-mode))
+  ;;   :config (add-hook 'css-mode-hook #'rainbow-mode))
+
+#+END_SRC
+** yasnippet
+#+BEGIN_SRC emacs-lisp
+  (use-package yasnippet                  ; Snippets
+    :ensure t
+    :defer t
+    :diminish (yas-minor-mode . " Ⓨ"))
+
+#+END_SRC
+** flycheck
+#+BEGIN_SRC emacs-lisp
+  ;;; Spelling and syntax checking
+  (use-package ispell                     ; Spell checking
+    :defer t
+    :config
+    (defun ispell-init-process-shutup (orig-fun &rest args)
+      (let ((inhibit-message t))
+        (apply orig-fun args)))
+    (advice-add #'ispell-init-process :around #'ispell-init-process-shutup)
+    (setq ispell-program-name (if (eq system-type 'darwin)
+                                  (executable-find "aspell")
+                                (executable-find "hunspell"))
+          ispell-dictionary "en"     ; Default dictionnary
+          ispell-silently-savep t       ; Don't ask when saving the private dict
+          ;; Increase the height of the choices window to take our header line
+          ;; into account.
+          ispell-choices-win-default-height 5)
+
+    (unless ispell-program-name
+      (warn "No spell checker available.  Install Hunspell or ASpell for OS X.")))
+
+  ;; (use-package flyspell                   ; On-the-fly spell checking
+  ;;   :bind (("C-c t s" . flyspell-mode)
+  ;;          ("C-c l b" . flyspell-buffer))
+  ;;   :init (progn (dolist (hook '(text-mode-hook message-mode-hook))
+  ;;                  (add-hook hook 'turn-on-flyspell))
+  ;;                (add-hook 'prog-mode-hook 'flyspell-prog-mode))
+  ;;   :config
+  ;;   (progn
+  ;;     (setq flyspell-use-meta-tab nil
+  ;;           ;; Make Flyspell less chatty
+  ;;           flyspell-issue-welcome-flag nil
+  ;;           flyspell-issue-message-flag nil)
+
+  ;;     ;; Free C-M-i for completion
+  ;;     (define-key flyspell-mode-map "\M-\t" nil)
+  ;;     ;; Undefine mouse buttons which get in the way
+  ;;     (define-key flyspell-mouse-map [down-mouse-2] nil)
+  ;;     (define-key flyspell-mouse-map [mouse-2] nil))
+  ;;   :diminish (flyspell-mode . " ⓢ"))
+
+
 
 #+END_SRC
