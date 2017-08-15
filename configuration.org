@@ -32,6 +32,13 @@
 
   (global-set-key (kbd "<f2>") 'open-init-file)
 
+  ;; Open gcal.org
+  (defun open-gcal-file()
+    (interactive)
+    (find-file "~/Documents/gtd/gcal.org"))
+
+  (global-set-key (kbd "<f3>") 'open-gcal-file)
+
 #+END_SRC
 
 ** Fix for mac
@@ -147,7 +154,21 @@
 
                                 ("p" "Paper Reading [project]" entry
                                  (file+headline "~/Documents/gtd/project.org" "Paper Reading")
-                                 "* TODO %?\n:PROPERTIES:\n\n:END:\nSCHEDULED: %^t DEADLINE: %^t %i\n")))
+                                 "* TODO %?\n:PROPERTIES:\n\n:END:\nSCHEDULED: %^T %i\n")
+
+                                ("r" "Research [notes]" entry
+                                 (file+headline "~/Documents/gtd/notes.org" "Research")
+                                 "* Note %?\n%T")
+
+                                ("y" "Python [notes]" entry
+                                 (file+headline "~/Documents/gtd/notes.org" "Python")
+                                 "* Note %?\n%T")
+
+                                ("e" "Emacs [notes]" entry
+                                 (file+headline "~/Documents/gtd/notes.org" "Emacs")
+                                 "* Note %?\n%T")
+
+                                ))
 #+END_SRC
 
 ** todo keywords
@@ -325,6 +346,32 @@
     :diminish reftex-mode)
 
 #+END_SRC
+* python
+[[https://github.com/MassimoLauria/dotemacs.git][Copy from MassimoLauria]]
+#+BEGIN_SRC emacs-lisp
+  ;; use IPython
+
+  (when (and (executable-find "ipython")
+             (version<= "24.3" emacs-version))
+
+    (setq python-shell-interpreter "ipython"
+          python-shell-interpreter-args "--simple-prompt --pprint"
+          python-shell-completion-native-enable nil
+          ))
+
+
+  ;; Code analysis
+  (use-package anaconda-mode
+    :ensure t
+    :diminish t
+    :commands anaconda-mode
+    :init '(add-hook 'python-mode-hook 'anaconda-mode)
+    :config
+    (define-key anaconda-mode-map  (kbd "M-/") 'anaconda-mode-show-doc)
+    (define-key anaconda-mode-map  (kbd "M-.") 'anaconda-mode-find-definitions)
+    (define-key anaconda-mode-map  (kbd "M-,") 'anaconda-mode-go-back)
+    (define-key anaconda-mode-map  (kbd "M-r") nil))
+#+End_SRC
 * Packages
 ** ace-window
 
