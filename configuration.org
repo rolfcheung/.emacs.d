@@ -109,6 +109,9 @@
     :config
     (setq org-startup-indented t))
 
+  ;; Hide emphasis markers
+  (setq org-hide-emphasis-markers t)
+
   ;; Exporting to PDF with syntax highlighting in the code, Pygments may be needed
   ;;(use-package ox-latex
   ;;  :config
@@ -178,14 +181,14 @@
 #+END_SRC
 ** tags
 #+BEGIN_SRC emacs-lisp
-  (setq org-tag-alist '(("Reserch" . ?r)
+  (setq org-tag-alist '(("Research" . ?r)
                         ("LifeChange" . ?l)
                         ("@Boss" . ?b)
                         ("@Family" . ?f)
                         ("@Pal" . ?p)
                         ("Others" . ?o)))
   (setq org-tags-column -80)
-  (setq org-tag-faces '(("Reserch" :foreground "orange" :underline t :weight bold)
+  (setq org-tag-faces '(("Research" :foreground "orange" :underline t :weight bold)
                         ("Others" :foreground "blue")
                         ("LifeChange" :foregound "#f7fcb9")
                         ("@Boss" :foreground "lime green" :underline t :weight bold)
@@ -216,7 +219,9 @@
           TeX-clean-confirm nil
           ;; Provide forward and inverse search with SyncTeX
           TeX-source-correlate-mode t
-          TeX-source-correlate-method 'synctex)
+          TeX-source-correlate-method 'synctex
+          ;; Set header font normal
+          font-latex-fontify-sectioning 1.0)
     (setq-default TeX-master nil          ; Ask for the master file
                   TeX-engine 'xetex      ; Use a modern engine
                   ;; Redundant in 11.88, but keep for older AUCTeX
@@ -231,43 +236,43 @@
     ;; Don't ask for confirmation when saving before processing
     :config (setq TeX-save-query nil))
 
-  (use-package tex-style                  ; TeX style
-    :ensure auctex
-    :defer t
-    :config
-    ;; Enable support for csquotes
-    (setq LaTeX-csquotes-close-quote "}"
-          LaTeX-csquotes-open-quote "\\enquote{"))
+  ;; (use-package tex-style                  ; TeX style
+  ;;   :ensure auctex
+  ;;   :defer t
+  ;;   :config
+  ;;   ;; Enable support for csquotes
+  ;;   (setq LaTeX-csquotes-close-quote "}"
+  ;;         LaTeX-csquotes-open-quote "\\enquote{"))
 
-  (use-package tex-fold                   ; TeX folding
-    :ensure auctex
-    :defer t
-    :init (add-hook 'TeX-mode-hook #'TeX-fold-mode))
+  ;; (use-package tex-fold                   ; TeX folding
+  ;;   :ensure auctex
+  ;;   :defer t
+  ;;   :init (add-hook 'TeX-mode-hook #'TeX-fold-mode))
 
-  (use-package tex-mode                   ; TeX mode
-    :ensure auctex
-    :defer t
-    :config
-    (font-lock-add-keywords 'latex-mode
-                            `((,(rx "\\"
-                                    symbol-start
-                                    "fx" (1+ (or (syntax word) (syntax symbol)))
-                                    symbol-end)
-                               . font-lock-warning-face))))
+  ;; (use-package tex-mode                   ; TeX mode
+  ;;   :ensure auctex
+  ;;   :defer t
+  ;;   :config
+  ;;   (font-lock-add-keywords 'latex-mode
+  ;;                           `((,(rx "\\"
+  ;;                                   symbol-start
+  ;;                                   "fx" (1+ (or (syntax word) (syntax symbol)))
+  ;;                                   symbol-end)
+  ;;                              . font-lock-warning-face))))
 
-  (use-package latex                      ; LaTeX editing
-    :ensure auctex
-    :defer t
-    :config
-    ;; Teach TeX folding about KOMA script sections
-    (setq TeX-outline-extra `((,(rx (0+ space) "\\section*{") 2)
-                              (,(rx (0+ space) "\\subsection*{") 3)
-                              (,(rx (0+ space) "\\subsubsection*{") 4)
-                              (,(rx (0+ space) "\\minisec{") 5))
-          ;; No language-specific hyphens please
-          LaTeX-babel-hyphen nil)
+  ;; (use-package latex                      ; LaTeX editing
+  ;;   :ensure auctex
+  ;;   :defer t
+  ;;   :config
+  ;;   ;; Teach TeX folding about KOMA script sections
+  ;;   (setq TeX-outline-extra `((,(rx (0+ space) "\\section*{") 2)
+  ;;                             (,(rx (0+ space) "\\subsection*{") 3)
+  ;;                             (,(rx (0+ space) "\\subsubsection*{") 4)
+  ;;                             (,(rx (0+ space) "\\minisec{") 5))
+  ;;         ;; No language-specific hyphens please
+  ;;         LaTeX-babel-hyphen nil)
 
-    (add-hook 'LaTeX-mode-hook #'LaTeX-math-mode))    ; Easy math input
+  ;;   (add-hook 'LaTeX-mode-hook #'LaTeX-math-mode))    ; Easy math input
 
   (use-package auctex-latexmk             ; latexmk command for AUCTeX
     :ensure t
@@ -275,36 +280,36 @@
     :after latex
     :config (auctex-latexmk-setup))
 
-  (use-package auctex-skim                ; Skim as viewer for AUCTeX
-    :load-path "lisp/"
-    :commands (auctex-skim-select)
-    :after tex
-    :config (auctex-skim-select))
+  ;; ;; (use-package auctex-skim                ; Skim as viewer for AUCTeX
+  ;; ;;   :load-path "lisp/"
+  ;; ;;   :commands (auctex-skim-select)
+  ;; ;;   :after tex
+  ;; ;;   :config (auctex-skim-select))
 
-  (use-package bibtex                     ; BibTeX editing
-    :defer t
-    :config
-    ;; Run prog mode hooks for bibtex
-    (add-hook 'bibtex-mode-hook (lambda () (run-hooks 'prog-mode-hook)))
+  ;; (use-package bibtex                     ; BibTeX editing
+  ;;   :defer t
+  ;;   :config
+  ;;   ;; Run prog mode hooks for bibtex
+  ;;   (add-hook 'bibtex-mode-hook (lambda () (run-hooks 'prog-mode-hook)))
 
-    ;; Use a modern BibTeX dialect
-    (bibtex-set-dialect 'biblatex))
+  ;;   ;; Use a modern BibTeX dialect
+  ;;   (bibtex-set-dialect 'biblatex))
 
-  (defun lunaryorn-reftex-find-ams-environment-caption (environment)
-    "Find the caption of an AMS ENVIRONMENT."
-    (let ((re (rx-to-string `(and "\\begin{" ,environment "}"))))
-      ;; Go to the beginning of the label first
-      (re-search-backward re)
-      (goto-char (match-end 0)))
-    (if (not (looking-at (rx (zero-or-more space) "[")))
-        (error "Environment %s has no title" environment)
-      (let ((beg (match-end 0)))
-        ;; Move point onto the title start bracket and move over to the end,
-        ;; skipping any other brackets in between, and eventually extract the text
-        ;; between the brackets
-        (goto-char (1- beg))
-        (forward-list)
-        (buffer-substring-no-properties beg (1- (point))))))
+  ;; (defun lunaryorn-reftex-find-ams-environment-caption (environment)
+  ;;   "Find the caption of an AMS ENVIRONMENT."
+  ;;   (let ((re (rx-to-string `(and "\\begin{" ,environment "}"))))
+  ;;     ;; Go to the beginning of the label first
+  ;;     (re-search-backward re)
+  ;;     (goto-char (match-end 0)))
+  ;;   (if (not (looking-at (rx (zero-or-more space) "[")))
+  ;;       (error "Environment %s has no title" environment)
+  ;;     (let ((beg (match-end 0)))
+  ;;       ;; Move point onto the title start bracket and move over to the end,
+  ;;       ;; skipping any other brackets in between, and eventually extract the text
+  ;;       ;; between the brackets
+  ;;       (goto-char (1- beg))
+  ;;       (forward-list)
+  ;;       (buffer-substring-no-properties beg (1- (point))))))
 
   (use-package reftex                     ; TeX/BibTeX cross-reference management
     :defer t
